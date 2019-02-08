@@ -1,9 +1,11 @@
+import os, logging, shutil, datetime
+os.system('nvcc --version')
+
 import tensorflow as tf
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = False
 session = tf.Session(config = config)
 
-import os, logging, shutil, datetime
 import glob
 import argparse
 import yaml
@@ -14,6 +16,7 @@ import nn
 import models
 from batches import get_batches, plot_batch, postprocess, n_boxes
 import deeploss
+
 
 
 def init_logging(out_base_dir):
