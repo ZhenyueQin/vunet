@@ -15,36 +15,36 @@ def preprocess_input(x):
     """
     # from [-1, 1] to [0,255.0]
     x = (x + 1.0) / 2.0 * 255.0
-    # 'RGB'->'BGR'
+    # 'RGB'->'BGR', seems that the last dimension represents channels, ::-1 in the end reverse channels.
     x = x[:, :, :, ::-1]
     # Zero-center by mean pixel
-    x = x - np.array([103.939, 116.779, 123.68]).reshape((1,1,1,3))
+    x = x - np.array([103.939, 116.779, 123.68]).reshape((1, 1, 1, 3))
     return x
 
 
 class VGG19Features(object):
     def __init__(self, session,
-            feature_layers = None, feature_weights = None, gram_weights = None):
+                 feature_layers=None, feature_weights=None, gram_weights=None):
         K.set_session(session)
         self.base_model = VGG19(
-                include_top = False,
-                weights='imagenet')
+            include_top=False,
+            weights='imagenet')
         if feature_layers is None:
             feature_layers = [
-                    "input_1",
-                    "block1_conv2", "block2_conv2",
-                    "block3_conv2", "block4_conv2",
-                    "block5_conv2"]
+                "input_1",
+                "block1_conv2", "block2_conv2",
+                "block3_conv2", "block4_conv2",
+                "block5_conv2"]
         self.layer_names = [l.name for l in self.base_model.layers]
         for k in feature_layers:
             if not k in self.layer_names:
                 raise KeyError(
-                        "Invalid layer {}. Available layers: {}".format(
-                            k, self.layer_names))
+                    "Invalid layer {}. Available layers: {}".format(
+                        k, self.layer_names))
         features = [self.base_model.get_layer(k).output for k in feature_layers]
         self.model = Model(
-                inputs = self.base_model.input,
-                outputs = features)
+            inputs=self.base_model.input,
+            outputs=features)
         if feature_weights is None:
             feature_weights = len(feature_layers) * [1.0]
         if gram_weights is None:
@@ -56,13 +56,11 @@ class VGG19Features(object):
 
         self.variables = self.base_model.weights
 
-
     def extract_features(self, x):
         """x should be rgb in [-1,1]."""
         x = preprocess_input(x)
         features = self.model.predict(x)
         return features
-
 
     def make_feature_ops(self, x):
         """x should be rgb tensor in [-1,1]."""
@@ -70,18 +68,16 @@ class VGG19Features(object):
         features = self.model(x)
         return features
 
-
     def grams(self, fs):
         gs = list()
         for f in fs:
             bs, h, w, c = f.shape.as_list()
-            f = tf.reshape(f, [bs, h*w, c])
-            ft = tf.transpose(f, [0,2,1])
+            f = tf.reshape(f, [bs, h * w, c])
+            ft = tf.transpose(f, [0, 2, 1])
             g = tf.matmul(ft, f)
-            g = g / (4.0*h*w)
+            g = g / (4.0 * h * w)
             gs.append(g)
         return gs
-
 
     def make_loss_op(self, x, y):
         """x, y should be rgb tensors in [-1,1]."""
@@ -95,11 +91,11 @@ class VGG19Features(object):
         y_grams = self.grams(y_features)
 
         losses = [
-                tf.reduce_mean(tf.abs(xf - yf)) for xf, yf in zip(
-                    x_features, y_features)]
+            tf.reduce_mean(tf.abs(xf - yf)) for xf, yf in zip(
+                x_features, y_features)]
         gram_losses = [
-                tf.reduce_mean(tf.abs(xg - yg)) for xg, yg in zip(
-                    x_grams, y_grams)]
+            tf.reduce_mean(tf.abs(xg - yg)) for xg, yg in zip(
+                x_grams, y_grams)]
 
         for i in range(len(losses)):
             losses[i] = self.feature_weights[i] * losses[i]

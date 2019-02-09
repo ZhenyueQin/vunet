@@ -359,6 +359,7 @@ class Model(object):
             if self.valid_batches is not None:
                 # testing
                 X_batch, C_batch, XN_batch, CN_batch = next(self.valid_batches)
+
                 x_gen = self.test(C_batch)
                 for k in x_gen:
                     plot_batch(x_gen[k], os.path.join(
