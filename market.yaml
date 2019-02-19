@@ -1,4 +1,4 @@
-data_index: data/market/index.p
+data_index: /flush2/liu162/Zhenyue-Qin/Project-Wukong-Data-Warehouse/market/index.p
 batch_size: 16
 init_batches: 4
 spatial_size: 128
