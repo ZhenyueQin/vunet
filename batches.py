@@ -5,6 +5,7 @@ import pickle
 import os
 import cv2
 import math
+import matplotlib.pyplot as plt
 
 
 n_boxes = 8
@@ -247,6 +248,10 @@ def normalize(imgs, coords, stickmen, jo, box_factor):
     bs = len(imgs)
     for i in range(bs):
         img = imgs[i]
+
+        # plt.imshow(img)
+        # plt.show()
+
         joints = coords[i]
         stickman = stickmen[i]
 
@@ -280,10 +285,19 @@ def normalize(imgs, coords, stickmen, jo, box_factor):
                 part_img = cv2.warpPerspective(img, M, (h,w), borderMode = cv2.BORDER_REPLICATE)
                 part_stickman = cv2.warpPerspective(stickman, M, (h,w), borderMode = cv2.BORDER_REPLICATE)
 
+                # plt.imshow(part_img)
+                # plt.show()
+
+                # plt.imshow(part_stickman)
+                # plt.show()
             part_imgs.append(part_img)
             part_stickmen.append(part_stickman)
         img = np.concatenate(part_imgs, axis = 2)
         stickman = np.concatenate(part_stickmen, axis = 2)
+
+        # print('what is the new image: ', img)
+        # plt.imshow(img)
+        # plt.show()
 
         out_imgs.append(img)
         out_stickmen.append(stickman)
@@ -361,12 +375,14 @@ class IndexFlow(object):
 
         # prepare batch data
         # load images
+
         batch["imgs"] = list()
         for i in batch_indices:
             relpath = self.index["imgs"][i]
             path = os.path.join(self.basepath, relpath)
             batch["imgs"].append(load_img(path, target_size = self.img_shape))
         batch["imgs"] = np.stack(batch["imgs"])
+        # print('what is batch images: ', batch["imgs"].shape)
         batch["imgs"] = preprocess(batch["imgs"])
 
         # load joint coordinates

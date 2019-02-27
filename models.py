@@ -18,27 +18,6 @@ def make_model(name, template, **kwargs):
     return tf.make_template(name, run, unique_name_=name)
 
 
-def dec_up(
-        c, init=False, dropout_p=0.5,
-        n_scales=1, n_residual_blocks=2, activation="elu", n_filters=64, max_filters=128):
-    with model_arg_scope(
-            init=init, dropout_p=dropout_p, activation=activation):
-        # outputs
-        hs = []
-        # prepare input
-        h = nn.nin(c, n_filters)
-        for l in range(n_scales):
-            # level module
-            for i in range(n_residual_blocks):
-                h = nn.residual_block(h)
-                hs.append(h)
-            # prepare input to next level
-            if l + 1 < n_scales:
-                n_filters = min(2 * n_filters, max_filters)
-                h = nn.downsample(h, n_filters)
-        return hs
-
-
 def dec_down(
         gs, zs_posterior, training, init=False, dropout_p=0.5,
         n_scales=1, n_residual_blocks=2, activation="elu",
@@ -86,6 +65,8 @@ def dec_down(
                         # ar feedback sampled from
                         if training:
                             feedback = z_posterior_groups.pop(0)
+                            # print('p features: ', p_features)
+                            # print('feedback: ', feedback)
                         else:
                             feedback = z_group
                         # prepare input for next group
@@ -128,6 +109,29 @@ def dec_down(
         return hs, ps, zs
 
 
+def dec_up(
+        c, init=False, dropout_p=0.5,
+        n_scales=1, n_residual_blocks=2, activation="elu", n_filters=64, max_filters=128):
+    with model_arg_scope(
+            init=init, dropout_p=dropout_p, activation=activation):
+        # outputs
+        hs = []
+        # prepare input
+        h = nn.nin(c, n_filters)
+        for l in range(n_scales):
+            # level module
+            for i in range(n_residual_blocks):
+                h = nn.residual_block(h)
+                hs.append(h)
+            # prepare input to next level
+            if l + 1 < n_scales:
+                n_filters = min(2 * n_filters, max_filters)
+                h = nn.downsample(h, n_filters)
+        return hs
+
+
+# x是normalized images, c是the normalized human joints.
+# n_scales到底是什么?
 def enc_up(
         x, c, init=False, dropout_p=0.5,
         n_scales=1, n_residual_blocks=2, activation="elu", n_filters=64, max_filters=128):
@@ -136,6 +140,7 @@ def enc_up(
         # outputs
         hs = []
         # prepare input
+        # 这一行也很奇怪, 为什么要把x和c连起来呢?
         # xc = tf.concat([x,c], axis = -1)
         xc = x
         h = nn.nin(xc, n_filters)
@@ -146,8 +151,10 @@ def enc_up(
                 hs.append(h)
             # prepare input to next level
             if l + 1 < n_scales:
+                # 似乎它这个channel一直都是128, 没有增长过.
                 n_filters = min(2 * n_filters, max_filters)
                 h = nn.downsample(h, n_filters)
+
         return hs
 
 
@@ -165,6 +172,7 @@ def enc_down(
         zs = []  # samples from posterior
         # prepare input
         n_filters = gs[-1].shape.as_list()[-1]
+        # 这里的这个n_filters估计就一直是128了
         h = nn.nin(gs[-1], n_filters)
         for l in range(n_scales):
             # level module

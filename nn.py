@@ -111,9 +111,14 @@ def activate(x, activation, **kwargs):
 def nin(x, num_units):
     """ a network in network layer (1x1 CONV) """
     s = int_shape(x)
+    # print('s in nin: ', s)
     x = tf.reshape(x, [np.prod(s[:-1]), s[-1]])
+    # print('x1 in nin: ', x)
     x = dense(x, num_units)
-    return tf.reshape(x, s[:-1] + [num_units])
+    # print('x2 in nin: ', x)
+    rtn = tf.reshape(x, s[:-1] + [num_units])
+    # print('rtn in nin: ', rtn)
+    return rtn
 
 
 def downsample(x, num_units):
@@ -138,7 +143,11 @@ def residual_block(x, a = None, conv=conv2d, init=False, dropout_p=0.0, gated = 
     residual = x
     if a is not None:
         a = nin(activate(a), num_filters)
+        # print('x: ', x)
+        # print('a: ', a)
+        # print('residual: ', residual)
         residual = tf.concat([residual, a], axis = -1)
+        # print('residual after concat: ', residual)
     residual = activate(residual)
     residual = tf.nn.dropout(residual, keep_prob = 1.0 - dropout_p)
     residual = conv(residual, num_filters)
