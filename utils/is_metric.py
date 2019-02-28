@@ -49,6 +49,11 @@ def get_inception_score(images, splits=10):
       kl = part * (np.log(part) - np.log(np.expand_dims(np.mean(part, 0), 0)))
       kl = np.mean(np.sum(kl, 1))
       scores.append(np.exp(kl))
+
+    sys.stdout.write('is mean')
+    sys.stdout.write(str(np.mean(scores)))
+    sys.stdout.write('\nis std')
+    sys.stdout.write(str(np.std(scores)))
     return np.mean(scores), np.std(scores)
 
 # This function is called automatically.
