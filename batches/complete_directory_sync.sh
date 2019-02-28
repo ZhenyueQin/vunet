@@ -2,4 +2,4 @@
 
 #rsync -a --ignore-existing ../. liu162@bracewell.hpc.csiro.au:/home/liu162/Zhenyue/Project-Wukong-VAE-Study/Kristiadi-Generative-Models
 
-rsync -av --update . liu162@bracewell.hpc.csiro.au:/flush2/liu162/Zhenyue-Qin/Project-Wukong-V-U-Net
+rsync -av --exclude=restorer_log --exclude=outs --update . liu162@bracewell.hpc.csiro.au:/flush2/liu162/Zhenyue-Qin/Project-Wukong-V-U-Net --exclude='*.png'

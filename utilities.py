@@ -4,6 +4,8 @@ import shutil
 import glob
 import logging
 import scipy.misc
+import numpy as np
+from batches import get_batches, plot_batch
 
 
 def init_logging(out_base_dir):
@@ -28,8 +30,27 @@ def init_logging(out_base_dir):
     return out_dir, logger
 
 
-def plot_separate_images_in_a_batch(a_batch, save_path):
+def restorer_init_logging(out_base_dir):
+    os.makedirs(out_base_dir, exist_ok=True)
+    now = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    out_dir = os.path.join(out_base_dir, now)
+    os.makedirs(out_dir, exist_ok=False)
+
+    logging.basicConfig(filename=os.path.join(out_dir, 'log.txt'))
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    return out_dir, logger
+
+
+def plot_separate_imgs_in_a_batch(a_batch, save_path):
     for idx in range(len(a_batch)):
-        a_file_name = save_path + '_' + 'bch_' + str(idx) + '.png'
+        a_file_name = save_path + '_' + 'idx_' + str(idx) + '.png'
         scipy.misc.imsave(a_file_name, a_batch[idx])
+
+
+def save_batch_img_np_txt(a_batch, save_path, save_bch_img=True):
+    a_file_name = save_path + '.npy'
+    np.save(a_file_name, a_batch)
+    if save_bch_img:
+        plot_batch(a_batch, save_path+'.png')
 
