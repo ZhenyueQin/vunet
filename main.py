@@ -22,6 +22,8 @@ if __name__ == "__main__":
     parser.add_argument("--log_dir", default=default_log_dir, help="path to log into")
     parser.add_argument("--checkpoint", help="path to checkpoint to restore")
     parser.add_argument("--retrain", dest="retrain", action="store_true", help="reset global_step to zero")
+    parser.add_argument("--likelihood_loss",
+                        choices=['l1', 'vgg_perception'])
     parser.set_defaults(retrain=False)
 
     opt = parser.parse_args()
@@ -47,7 +49,7 @@ if __name__ == "__main__":
         logger.info("Number of training samples: {}".format(batches.n))
         logger.info("Number of validation samples: {}".format(valid_batches.n))
 
-        model = Model(config, out_dir, logger)
+        model = Model(config, out_dir, logger, opt)
         if opt.checkpoint is not None:
             model.restore_graph(opt.checkpoint)
         else:

@@ -18,7 +18,8 @@ import os
 
 
 class Model(object):
-    def __init__(self, config, out_dir, logger):
+    def __init__(self, config, out_dir, logger, opt):
+        self.opt = opt
         self.config = config
         self.batch_size = config["batch_size"]
         self.img_shape = 2 * [config["spatial_size"]] + [3]
@@ -170,7 +171,14 @@ class Model(object):
         # sample from model distribution
         sample = self.sample(params)
         # maximize likelihood
-        likelihood_loss = self.likelihood_loss(self.x, params)
+
+        if self.opt.likelihood_loss == 'vgg_perception':
+            print('using vgg perception likelihood loss')
+            likelihood_loss = self.likelihood_loss(self.x, params)
+        elif self.opt.likelihood_loss == 'l1':
+            print('using l1 likelihood loss')
+            likelihood_loss = tf.nn.l2_loss((self.x - params))
+
         kl_loss = tf.to_float(0.0)
         for q, p in zip(qs, ps):
             self.logger.info("Latent shape: {}".format(q.shape.as_list()))
@@ -208,8 +216,9 @@ class Model(object):
         self.img_ops["test_sample"] = test_sample
         self.img_ops["x"] = self.x
         self.img_ops["c"] = self.c
-        for i, l in enumerate(self.vgg19.losses):
-            self.log_ops["vgg_loss_{}".format(i)] = l
+        if self.opt.likelihood_loss == 'vgg_perception':
+            for i, l in enumerate(self.vgg19.losses):
+                self.log_ops["vgg_loss_{}".format(i)] = l
 
         # keep seperate train and validation summaries
         # only training summary contains histograms

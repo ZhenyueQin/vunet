@@ -6,8 +6,21 @@ import utilities
 from batches import get_batches, plot_batch, postprocess, n_boxes
 import datetime
 import numpy as np
+from tensorflow.python.client import device_lib
 
-to_use_cluster = False
+
+def get_available_gpus():
+    local_device_protos = device_lib.list_local_devices()
+    return [x.name for x in local_device_protos if x.device_type == 'GPU']
+
+
+available_gpus = get_available_gpus()
+print('GPUs: ', available_gpus)
+
+if available_gpus:
+    to_use_cluster = True
+else:
+    to_use_cluster = False
 
 default_log_dir = os.path.join(os.getcwd(), "restorer_log")
 out_dir, logger = utilities.restorer_init_logging(default_log_dir)
@@ -91,3 +104,4 @@ def restore_launch(mission_type, bch_limit=None):
 
 
 restore_launch('transfer')
+restore_launch('test')

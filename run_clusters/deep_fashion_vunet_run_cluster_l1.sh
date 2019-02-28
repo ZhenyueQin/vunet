@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
+
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:2
-#SBATCH --time=20:00:00
+#SBATCH --time=36:00:00
 #SBATCH --mem=30GB
 
 #module load tensorflow/1.4.0-py27-gpu
@@ -18,4 +19,6 @@
 module load tensorflow/1.4.0-py36-gpu
 #module load torchvision/0.2.1-py36
 
-python3 checkpoint_restorer.py
+#module load opencv/2.4.13.2
+python main.py --config deepfashion.yaml --likelihood_loss l1
+#python3 test_field.py
