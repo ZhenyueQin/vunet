@@ -45,8 +45,13 @@ data_shape = [batch_size] + img_shape
 init_shape = [config["init_batches"] * batch_size] + img_shape
 testing_batches = get_batches(data_shape, data_index, train=False, box_factor=box_factor, shuffle=False)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--likelihood_loss",
+                    choices=['l1', 'vgg_perception'])
+parser.set_defaults(retrain=False)
+opt = parser.parse_args()
 
-model = Model(config, out_dir, logger)
+model = Model(config, out_dir, logger, opt.likelihood_loss)
 print('restoring the graph ... ')
 model.restore_graph(model_path)
 

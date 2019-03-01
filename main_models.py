@@ -78,7 +78,9 @@ class Model(object):
         es, qs, zs_posterior = self.enc_down_pass(hs, **kwargs)
         # decoder
         gs = self.dec_up_pass(c, **kwargs)
+        # ds和h有关, ps和p有关, zs_prior和z有关
         ds, ps, zs_prior = self.dec_down_pass(gs, zs_posterior, training=True, **kwargs)
+        # ds[-1]是 256x256x32
         params = self.dec_params(ds[-1], **kwargs)
         activations = hs + es + gs + ds
         return params, qs, ps, activations

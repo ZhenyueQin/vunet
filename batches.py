@@ -382,7 +382,7 @@ class IndexFlow(object):
             path = os.path.join(self.basepath, relpath)
             batch["imgs"].append(load_img(path, target_size = self.img_shape))
         batch["imgs"] = np.stack(batch["imgs"])
-        # print('what is batch images: ', batch["imgs"].shape)
+        # print('`is batch images: ', batch["imgs"].shape)
         batch["imgs"] = preprocess(batch["imgs"])
 
         # load joint coordinates

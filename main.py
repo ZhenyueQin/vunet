@@ -11,7 +11,6 @@ from main_models import Model
 import utilities
 
 
-
 if __name__ == "__main__":
     default_log_dir = os.path.join(os.getcwd(), "log")
 
