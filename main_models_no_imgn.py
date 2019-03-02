@@ -54,11 +54,11 @@ class Model(object):
         n_filters = 32
         self.enc_up_pass = models.make_model(
             "enc_up", models.enc_up,
-            n_scales=n_scales - self.box_factor,
-            n_filters=n_filters * 2 ** self.box_factor)
+            n_scales=n_scales,
+            n_filters=n_filters)
         self.enc_down_pass = models.make_model(
             "enc_down", models.enc_down,
-            n_scales=n_scales - self.box_factor,
+            n_scales=n_scales,
             n_latent_scales=n_latent_scales)
         self.dec_up_pass = models.make_model(
             "dec_up", models.dec_up,
@@ -74,8 +74,8 @@ class Model(object):
     def train_forward_pass(self, x, c, xn, cn, dropout_p, init=False):
         kwargs = {"init": init, "dropout_p": dropout_p}
         # encoder
-        print('what is xn with imgn: ', xn)
-        hs = self.enc_up_pass(xn, cn, **kwargs)
+        # hs = self.enc_up_pass(xn, cn, **kwargs)
+        hs = self.enc_up_pass(x, c, **kwargs)
         es, qs, zs_posterior = self.enc_down_pass(hs, **kwargs)
         # decoder
         gs = self.dec_up_pass(c, **kwargs)
@@ -164,16 +164,20 @@ class Model(object):
         # training
         self.x = tf.placeholder(
             tf.float32,
-            shape=[self.batch_size] + self.img_shape)
+            shape=[self.batch_size] + self.img_shape,
+            name='self.x')
         self.c = tf.placeholder(
             tf.float32,
-            shape=[self.batch_size] + self.img_shape)
+            shape=[self.batch_size] + self.img_shape,
+            name='self.c')
         self.xn = tf.placeholder(
             tf.float32,
-            shape=[self.batch_size] + self.imgn_shape)
+            shape=[self.batch_size] + self.imgn_shape,
+            name='self.xn')
         self.cn = tf.placeholder(
             tf.float32,
-            shape=[self.batch_size] + self.imgn_shape)
+            shape=[self.batch_size] + self.imgn_shape,
+            name='self.cn')
         # compute parameters of model distribution
         params, qs, ps, activations = self.train_forward_pass(
             self.x, self.c,
@@ -357,8 +361,8 @@ class Model(object):
                 for r in range(bs):
                     imgs.append(C_batch[r, ...])
                 for i in range(bs):
-                    x_infer = XN_batch[i, ...]
-                    c_infer = CN_batch[i, ...]
+                    x_infer = X_batch[i, ...]
+                    c_infer = C_batch[i, ...]
                     imgs.append(X_batch[i, ...])
 
                     x_infer_batch = x_infer[None, ...].repeat(bs, axis=0)
@@ -402,8 +406,10 @@ class Model(object):
             self.c_generator = tf.placeholder(
                 tf.float32,
                 shape=[self.batch_size] + self.img_shape)
-            infer_x = self.xn
-            infer_c = self.cn
+            # infer_x = self.xn
+            # infer_c = self.cn
+            infer_x = self.x
+            infer_c = self.c
             generate_c = self.c_generator
             transfer_params = self.transfer_pass(infer_x, infer_c, generate_c)
             self.transfer_mean_sample = self.sample(transfer_params)
@@ -411,6 +417,9 @@ class Model(object):
 
         return session.run(
             self.transfer_mean_sample, {
-                self.xn: x_encode,
-                self.cn: c_encode,
+                self.x: x_encode,
+                self.c: c_encode,
                 self.c_generator: c_decode})
+
+
+

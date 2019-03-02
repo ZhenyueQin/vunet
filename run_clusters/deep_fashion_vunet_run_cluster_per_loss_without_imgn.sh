@@ -20,5 +20,5 @@ module load tensorflow/1.4.0-py36-gpu
 #module load torchvision/0.2.1-py36
 
 #module load opencv/2.4.13.2
-python main.py --config deepfashion.yaml --likelihood_loss vgg_perception
+python main.py --config deepfashion.yaml --likelihood_loss vgg_perception --to_use_imgn false
 #python3 test_field.py

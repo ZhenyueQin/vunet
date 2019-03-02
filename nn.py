@@ -144,8 +144,6 @@ def residual_block(x, a = None, conv=conv2d, init=False, dropout_p=0.0, gated = 
     if a is not None:
         a = nin(activate(a), num_filters)
         # print('x: ', x)
-        # print('a: ', a)
-        # print('residual: ', residual)
         residual = tf.concat([residual, a], axis = -1)
         # print('residual after concat: ', residual)
     residual = activate(residual)
