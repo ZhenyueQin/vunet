@@ -22,8 +22,10 @@ if __name__ == "__main__":
     parser.add_argument('--retrain', dest='retrain', action='store_true', help='reset global_step to zero')
     parser.add_argument('--likelihood_loss',
                         choices=['l1', 'vgg_perception'])
-    parser.add_argument('--to_use_imgn', default='t')
+    parser.add_argument('--to_use_imgn', default='true')
     parser.add_argument('--to_use_mean')
+    parser.add_argument('--loss_test')
+    parser.add_argument('--copy')
     parser.set_defaults(retrain=False)
 
     opt = parser.parse_args()
@@ -51,12 +53,31 @@ if __name__ == "__main__":
         logger.info('Number of training samples: {}'.format(batches.n))
         logger.info('Number of validation samples: {}'.format(valid_batches.n))
 
-        if opt.to_use_imgn == 'true':
-            from main_models import Model
-            model = Model(config, out_dir, logger, opt)
+        if opt.copy is None:
+            if opt.loss_test is None:
+                if opt.to_use_imgn == 'true':
+                    from main_models import Model
+                    model = Model(config, out_dir, logger, opt)
+                elif opt.to_use_imgn == 'false':
+                    from main_models_no_imgn import Model
+                    model = Model(config, out_dir, logger, opt)
+                elif opt.to_use_imgn == 'no_cn':
+                    from main_models_no_cn import Model
+                    model = Model(config, out_dir, logger, opt)
+            else:
+                print('playing loss test')
+                from main_models_loss_tester import Model
+                model = Model(config, out_dir, logger, opt)
         else:
-            from main_models_no_imgn import Model
-            model = Model(config, out_dir, logger, opt)
+            if opt.copy == 'no_loop':
+                print('Without the autoregressively modeled groups')
+                from main_models_no_group_loop import Model
+                model = Model(config, out_dir, logger, opt)
+            elif opt.copy == 'p_q':
+                print('Merely populate p with qs')
+                from main_models_copy import Model
+                model = Model(config, out_dir, logger, opt)
+
         if opt.checkpoint is not None:
             model.restore_graph(opt.checkpoint)
         else:

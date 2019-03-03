@@ -74,7 +74,6 @@ class Model(object):
     def train_forward_pass(self, x, c, xn, cn, dropout_p, init=False):
         kwargs = {"init": init, "dropout_p": dropout_p}
         # encoder
-        print('what is xn with imgn: ', xn)
         hs = self.enc_up_pass(xn, cn, **kwargs)
         es, qs, zs_posterior = self.enc_down_pass(hs, **kwargs)
         # decoder

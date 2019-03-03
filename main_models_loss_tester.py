@@ -74,7 +74,6 @@ class Model(object):
     def train_forward_pass(self, x, c, xn, cn, dropout_p, init=False):
         kwargs = {"init": init, "dropout_p": dropout_p}
         # encoder
-        print('what is xn with imgn: ', xn)
         hs = self.enc_up_pass(xn, cn, **kwargs)
         es, qs, zs_posterior = self.enc_down_pass(hs, **kwargs)
         # decoder
@@ -155,7 +154,7 @@ class Model(object):
             shape=[self.init_batches * self.batch_size] + self.imgn_shape)
         self.cn_init = tf.placeholder(
             tf.float32,
-            shape=[self.init_batches * self.batch_size] + self.img_shape)
+            shape=[self.init_batches * self.batch_size] + self.imgn_shape)
         self.dd_init_op = self.train_forward_pass(
             self.x_init, self.c_init,
             self.xn_init, self.cn_init,
@@ -173,7 +172,7 @@ class Model(object):
             shape=[self.batch_size] + self.imgn_shape)
         self.cn = tf.placeholder(
             tf.float32,
-            shape=[self.batch_size] + self.img_shape)
+            shape=[self.batch_size] + self.imgn_shape)
         # compute parameters of model distribution
         params, qs, ps, activations = self.train_forward_pass(
             self.x, self.c,
@@ -194,7 +193,13 @@ class Model(object):
         for q, p in zip(qs, ps):
             self.logger.info("Latent shape: {}".format(q.shape.as_list()))
             kl_loss += models.latent_kl(q, p)
-        loss = likelihood_loss + kl_weight * kl_loss
+
+        if self.opt.loss_test == 'likelihood':
+            print('merely using likelihood loss')
+            loss = likelihood_loss
+        elif self.opt.loss_test == 'kl':
+            print('merely using kl loss')
+            loss = kl_weight * kl_loss
 
         # testing
         test_forward = self.test_forward_pass(self.c)
@@ -257,7 +262,7 @@ class Model(object):
         initializer_op = tf.variables_initializer(self.variables)
         feed = {
             self.xn_init: init_batch[2],
-            self.cn_init: init_batch[1],
+            self.cn_init: init_batch[3],
             self.x_init: init_batch[0],
             self.c_init: init_batch[1]}
         session.run(initializer_op, feed)
@@ -283,7 +288,7 @@ class Model(object):
             X_batch, C_batch, XN_batch, CN_batch = next(batches)
             feed_dict = {
                 self.xn: XN_batch,
-                self.cn: C_batch,
+                self.cn: CN_batch,
                 self.x: X_batch,
                 self.c: C_batch}
             fetch_dict = {"train": self.train_op}
@@ -314,7 +319,7 @@ class Model(object):
                 X_batch, C_batch, XN_batch, CN_batch = next(self.valid_batches)
                 feed_dict = {
                     self.xn: XN_batch,
-                    self.cn: C_batch,
+                    self.cn: CN_batch,
                     self.x: X_batch,
                     self.c: C_batch}
                 fetch_dict = dict()
@@ -358,7 +363,7 @@ class Model(object):
                     imgs.append(C_batch[r, ...])
                 for i in range(bs):
                     x_infer = XN_batch[i, ...]
-                    c_infer = C_batch[i, ...]
+                    c_infer = CN_batch[i, ...]
                     imgs.append(X_batch[i, ...])
 
                     x_infer_batch = x_infer[None, ...].repeat(bs, axis=0)
