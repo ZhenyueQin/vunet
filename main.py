@@ -26,6 +26,7 @@ if __name__ == "__main__":
     parser.add_argument('--to_use_mean')
     parser.add_argument('--loss_test')
     parser.add_argument('--copy')
+    parser.add_argument('--add_train')
     parser.set_defaults(retrain=False)
 
     opt = parser.parse_args()

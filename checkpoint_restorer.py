@@ -1,5 +1,4 @@
 import os
-from main_models import Model
 import argparse
 import yaml
 import utilities
@@ -7,6 +6,7 @@ from batches import get_batches, plot_batch, postprocess, n_boxes
 import datetime
 import numpy as np
 from tensorflow.python.client import device_lib
+from main_models import Model
 
 
 def get_available_gpus():
@@ -31,7 +31,6 @@ if to_use_cluster:
 else:
     model_path = '/Volumes/Qin-Warehouse/Warehouse-Data/Variational-U-Net/log/2019-02-06T18-10-49/checkpoints/model.ckpt-100000'
     config_path = 'deepfashion_local.yaml'
-
 
 with open(config_path) as f:
     config = yaml.load(f)
@@ -108,5 +107,38 @@ def restore_launch(mission_type, bch_limit=None):
     print('ending DT: ', endingDT)
 
 
-restore_launch('transfer')
-restore_launch('test')
+def test_transfer_commonality_check(bch_limit):
+    X_batch_init, C_batch_init, XN_batch_init, CN_batch_init = next(testing_batches)
+    batch_idx = 0
+
+    while True:
+        print('current batch idx in test transfer commonality check: ', batch_idx)
+        X_batch, C_batch, XN_batch, CN_batch = next(testing_batches)
+        test_rsts = model.test(C_batch)
+
+        # Test
+        combined_bch_img = []
+
+        combined_bch_img = np.concatenate([test_rsts['cond'], test_rsts['test_sample']])
+        test_save_img_name = os.path.join(out_dir, ("bch_{}_{}.png".format(batch_idx, 'test')))
+        plot_batch(combined_bch_img, test_save_img_name)
+
+        # Transfer
+        test_rsts = []
+        transfer_rts = model.transfer(XN_batch_init, CN_batch_init, C_batch)
+        bs = X_batch.shape[0]
+
+        transfer_save_rsts = np.concatenate([C_batch, X_batch_init, transfer_rts])
+        transfer_save_img_name = os.path.join(out_dir, "bch_{}_{}".format(batch_idx, 'transfer'))
+        plot_batch(transfer_save_rsts, transfer_save_img_name + '_src_app.png')
+
+        batch_idx += 1
+
+        if batch_idx >= bch_limit:
+            break
+
+
+# restore_launch('transfer', bch_limit=10)
+# restore_launch('test', bch_limit=10)
+
+test_transfer_commonality_check(10)

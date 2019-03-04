@@ -102,11 +102,14 @@ class Model(object):
         # generate from inferred latent code and conditioning
         gs = self.dec_up_pass(generate_c, **kwargs)
 
-        if self.opt.to_use_mean is not None:
-            if self.opt.to_use_mean == 'true':
-                use_mean = True
+        if self.opt is not None:
+            if self.opt.to_use_mean is not None:
+                if self.opt.to_use_mean == 'true':
+                    use_mean = True
+                else:
+                    use_mean = False
             else:
-                use_mean = False
+                use_mean = True
         else:
             use_mean = True
 
@@ -181,18 +184,13 @@ class Model(object):
         # sample from model distribution
         sample = self.sample(params)
         # maximize likelihood
-
-        if self.opt.likelihood_loss == 'vgg_perception':
-            print('using vgg perception likelihood loss')
-            likelihood_loss = self.likelihood_loss(self.x, params)
-        elif self.opt.likelihood_loss == 'l1':
-            print('using l1 likelihood loss')
-            likelihood_loss = tf.nn.l2_loss((self.x - params))
+        likelihood_loss = self.likelihood_loss(self.x, params)
 
         kl_loss = tf.to_float(0.0)
         for q, p in zip(qs, ps):
             self.logger.info("Latent shape: {}".format(q.shape.as_list()))
             kl_loss += models.latent_kl(q, p)
+
         loss = likelihood_loss + kl_weight * kl_loss
 
         # testing
@@ -226,7 +224,11 @@ class Model(object):
         self.img_ops["test_sample"] = test_sample
         self.img_ops["x"] = self.x
         self.img_ops["c"] = self.c
-        if self.opt.likelihood_loss == 'vgg_perception':
+        if self.opt is not None:
+            if self.opt.likelihood_loss == 'vgg_perception':
+                for i, l in enumerate(self.vgg19.losses):
+                    self.log_ops["vgg_loss_{}".format(i)] = l
+        else:
             for i, l in enumerate(self.vgg19.losses):
                 self.log_ops["vgg_loss_{}".format(i)] = l
 
